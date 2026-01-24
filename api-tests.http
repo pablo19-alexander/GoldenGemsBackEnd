@@ -1,0 +1,5 @@
+### Health Check - Verificar el estado de la API
+GET http://localhost:5135/api/health
+Accept: application/json
+
+###
