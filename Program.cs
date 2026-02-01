@@ -1,9 +1,15 @@
+using GoldenGemsBackEnd.Data;
 using GoldenGemsBackEnd.Middleware;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
+
+// DbContext (PostgreSQL)
+builder.Services.AddDbContext<GoldenGemsDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add CORS
 builder.Services.AddCors(options =>
