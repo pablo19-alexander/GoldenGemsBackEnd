@@ -15,7 +15,7 @@ namespace GoldenGemsBackEnd.Models
         /// <summary>
         /// Identificador único de la entidad basado en GUID.
         /// </summary>
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
         /// Fecha y hora UTC en que fue creada la entidad.
@@ -39,12 +39,10 @@ namespace GoldenGemsBackEnd.Models
         /// </summary>
         /// <remarks>
         /// Inicializa:
-        /// - Id con un nuevo GUID
         /// - CreatedAt con la hora UTC actual
         /// </remarks>
         protected BaseEntity()
         {
-            Id = Guid.NewGuid();
             CreatedAt = DateTime.UtcNow;
         }
     }

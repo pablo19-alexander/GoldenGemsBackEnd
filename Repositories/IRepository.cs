@@ -15,7 +15,7 @@ namespace GoldenGemsBackEnd.Repositories
         /// <summary>
         /// Obtiene una entidad por su identificador único.
         /// </summary>
-        /// <param name="id">El GUID de la entidad a buscar</param>
+        /// <param name="id">El ID de la entidad a buscar</param>
         /// <returns>La entidad encontrada o null si no existe</returns>
         Task<T?> GetByIdAsync(Guid id);
 
@@ -42,14 +42,14 @@ namespace GoldenGemsBackEnd.Repositories
         /// <summary>
         /// Elimina una entidad por su identificador único.
         /// </summary>
-        /// <param name="id">El GUID de la entidad a eliminar</param>
+        /// <param name="id">El ID de la entidad a eliminar</param>
         /// <returns>true si la eliminación fue exitosa, false en caso contrario</returns>
         Task<bool> DeleteAsync(Guid id);
 
         /// <summary>
         /// Verifica si una entidad existe por su identificador único.
         /// </summary>
-        /// <param name="id">El GUID de la entidad a verificar</param>
+        /// <param name="id">El ID de la entidad a verificar</param>
         /// <returns>true si la entidad existe, false en caso contrario</returns>
         Task<bool> ExistsAsync(Guid id);
     }
