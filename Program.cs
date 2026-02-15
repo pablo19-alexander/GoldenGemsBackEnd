@@ -1,15 +1,75 @@
+using GoldenGemsBackEnd.Configurations;
 using GoldenGemsBackEnd.Data;
 using GoldenGemsBackEnd.Middleware;
+using GoldenGemsBackEnd.Models.Security;
+using GoldenGemsBackEnd.Services.Auth.Services;
+using GoldenGemsBackEnd.Services.Auth.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
 // Add services to the container
 builder.Services.AddControllers();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITokenService, JwtTokenService>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
 // DbContext (PostgreSQL)
 builder.Services.AddDbContext<GoldenGemsDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var jwtSettings = jwtSection.Get<JwtSettings>() ?? new JwtSettings();
+
+jwtSettings.SecretKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? jwtSettings.SecretKey;
+jwtSettings.Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? jwtSettings.Issuer;
+jwtSettings.Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? jwtSettings.Audience;
+
+var expirationFromEnv = Environment.GetEnvironmentVariable("JWT_ACCESS_TOKEN_MINUTES");
+if (int.TryParse(expirationFromEnv, out var expirationMinutes))
+{
+    jwtSettings.AccessTokenExpirationMinutes = expirationMinutes;
+}
+
+if (string.IsNullOrWhiteSpace(jwtSettings.SecretKey))
+{
+    throw new InvalidOperationException("Jwt:SecretKey o JWT_SECRET no están configurados.");
+}
+
+builder.Services.Configure<JwtSettings>(options =>
+{
+    options.Issuer = jwtSettings.Issuer;
+    options.Audience = jwtSettings.Audience;
+    options.SecretKey = jwtSettings.SecretKey;
+    options.AccessTokenExpirationMinutes = jwtSettings.AccessTokenExpirationMinutes;
+});
+
+var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey));
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateIssuerSigningKey = true,
+        ValidateLifetime = true,
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = signingKey,
+        ClockSkew = TimeSpan.Zero
+    };
+});
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -26,8 +86,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { 
-        Title = "GoldenGems API", 
+    c.SwaggerDoc("v1", new()
+    {
+        Title = "GoldenGems API",
         Version = "v1",
         Description = "API Backend para GoldenGems"
     });
@@ -54,6 +115,7 @@ app.UseHttpsRedirection();
 // CORS debe ir antes de Authorization
 app.UseCors("AllowAll");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
