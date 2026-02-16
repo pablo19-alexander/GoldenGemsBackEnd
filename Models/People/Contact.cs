@@ -29,6 +29,8 @@ public class Contact : BaseEntity
     /// Relación con región.
     /// </summary>
     public Guid? RegionId { get; set; }
+
+    
     public Region? Region { get; set; }
 
     /// <summary>

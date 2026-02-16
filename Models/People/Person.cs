@@ -34,17 +34,19 @@ public class Person : BaseEntity
     /// Relación con el tipo de documento.
     /// </summary>
     public Guid DocumentTypeId { get; set; }
-    public DocumentType? DocumentType { get; set; }
 
     /// <summary>
     /// Relación con contacto.
     /// </summary>
     public Guid? ContactId { get; set; }
-    public Contact? Contact { get; set; }
-
+    
     /// <summary>
     /// Relación con el usuario.
     /// </summary>
     public Guid UserId { get; set; }
+
+
+    public DocumentType? DocumentType { get; set; }
+    public Contact? Contact { get; set; }
     public User? User { get; set; }
 }
