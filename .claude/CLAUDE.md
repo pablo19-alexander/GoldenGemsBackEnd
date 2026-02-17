@@ -104,6 +104,58 @@ Test HTTP requests are available in:
 - Services layer handles business logic
 - JWT tokens are used for stateless authentication
 
+## User Creation System (NEW - In Progress)
+
+### Overview
+Complete user creation flow with roles and actions management.
+
+### Components Implemented (FASE 0 - Complete)
+
+1. **Role Management**:
+   - `POST /api/role/create` - Create new role (Admin only)
+   - `GET /api/role/all` - Get all roles (Admin only)
+   - Automatic "User" role creation on startup
+
+2. **Action Management**:
+   - `POST /api/action/create` - Create new action (Admin only)
+   - `GET /api/action/all` - Get all actions (Admin only)
+
+### Components In Progress (FASE 1)
+
+1. **User Creation Endpoints**:
+   - `POST /api/auth/register` - Public registration (updated)
+     - Requires complete Person information
+     - Automatic "User" role assignment
+     - IsActive = true by default
+   - `POST /api/auth/create` - Admin user creation (in progress)
+     - Requires authorization (Admin role)
+     - Custom role assignment
+     - Optional IsActive flag
+
+2. **Password Validation**:
+   - Minimum 8 characters
+   - At least 1 uppercase, 1 lowercase, 1 number, 1 special character (!@#$%^&*)
+
+3. **Validations**:
+   - Email uniqueness
+   - Username uniqueness
+   - Document number uniqueness (by DocumentType)
+   - Role existence
+   - DocumentType existence
+
+### Files Created
+- See `NEXT_STEPS.md` for detailed file list and implementation checklist
+
+### Next Steps
+- Implement UserValidationService
+- Update AuthService with user creation methods
+- Update AuthController with `/api/auth/create` endpoint
+- Create database migrations
+- Add HTTP test examples
+- Run complete manual tests
+
+For detailed implementation plan, see `NEXT_STEPS.md`
+
 ## Git Workflow
 
 - Main branch: `master`
