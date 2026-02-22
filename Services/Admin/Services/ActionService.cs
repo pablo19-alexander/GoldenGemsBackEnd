@@ -13,11 +13,16 @@ namespace GoldenGemsBackEnd.Services.Admin.Services;
 public class ActionService : BaseService, IActionService
 {
     private readonly IActionRepository _actionRepository;
+    private readonly IActionTypeRepository _actionTypeRepository;
 
-    public ActionService(IActionRepository actionRepository, ILogger<ActionService> logger)
+    public ActionService(
+        IActionRepository actionRepository,
+        IActionTypeRepository actionTypeRepository,
+        ILogger<ActionService> logger)
         : base(logger)
     {
         _actionRepository = actionRepository ?? throw new ArgumentNullException(nameof(actionRepository));
+        _actionTypeRepository = actionTypeRepository ?? throw new ArgumentNullException(nameof(actionTypeRepository));
     }
 
     /// <summary>
@@ -40,6 +45,16 @@ public class ActionService : BaseService, IActionService
             var code = request.Code.Trim().ToUpper();
             var name = request.Name.Trim();
 
+            if (request.ActionTypeId == Guid.Empty)
+                return ApiResponse<ActionResponseDto>.ErrorResponse("El tipo de acción es requerido");
+
+            var actionType = await _actionTypeRepository.GetByIdAsync(request.ActionTypeId, cancellationToken);
+            if (actionType is null)
+            {
+                _logger.LogWarning("Intento de crear acción con tipo inexistente: {ActionTypeId}", request.ActionTypeId);
+                return ApiResponse<ActionResponseDto>.ErrorResponse("El tipo de acción especificado no existe");
+            }
+
             // Validar código único
             if (await _actionRepository.ExistsByCodeAsync(code, cancellationToken))
             {
@@ -53,14 +68,16 @@ public class ActionService : BaseService, IActionService
                 Id = Guid.NewGuid(),
                 Name = name,
                 Code = code,
-                Description = request.Description?.Trim(),
-                ActionType = request.ActionType,
+                Description = request.Description?.Trim() ?? string.Empty,
+                ActionTypeId = actionType.Id,
+                ActionType = actionType,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
 
             // Guardar en BD
             var createdAction = await _actionRepository.CreateAsync(action, cancellationToken);
+            createdAction.ActionType = actionType;
 
             // Mapear a DTO de respuesta
             var actionDto = MapActionToDto(createdAction);
@@ -142,7 +159,9 @@ public class ActionService : BaseService, IActionService
             Name = action.Name,
             Code = action.Code,
             Description = action.Description,
-            ActionType = action.ActionType,
+            ActionTypeId = action.ActionTypeId,
+            ActionTypeCode = action.ActionType?.Code ?? string.Empty,
+            ActionTypeDescription = action.ActionType?.Description,
             IsActive = action.IsActive,
             CreatedAt = action.CreatedAt
         };

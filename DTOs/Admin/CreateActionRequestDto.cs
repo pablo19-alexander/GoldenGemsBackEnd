@@ -30,9 +30,8 @@ public class CreateActionRequestDto
     public string? Description { get; set; }
 
     /// <summary>
-    /// Tipo de acción (ej: Form, Process, View, etc.)
+    /// Identificador del tipo de acción (catálogo ActionType)
     /// </summary>
     [Required(ErrorMessage = "El tipo de acción es requerido")]
-    [StringLength(50, MinimumLength = 1, ErrorMessage = "El tipo debe tener entre 1 y 50 caracteres")]
-    public string ActionType { get; set; } = string.Empty;
+    public Guid ActionTypeId { get; set; }
 }

@@ -41,6 +41,7 @@ public class ActionRepository : IActionRepository
     public async Task<List<Actions>> GetAllAsync(CancellationToken cancellationToken)
     {
         return await _context.Actions
+            .Include(a => a.ActionType)
             .AsNoTracking()
             .OrderBy(a => a.Code)
             .ToListAsync(cancellationToken);
@@ -52,6 +53,7 @@ public class ActionRepository : IActionRepository
     public async Task<List<Actions>> GetAllActiveAsync(CancellationToken cancellationToken)
     {
         return await _context.Actions
+            .Include(a => a.ActionType)
             .AsNoTracking()
             .Where(a => a.IsActive)
             .OrderBy(a => a.Code)
@@ -79,6 +81,7 @@ public class ActionRepository : IActionRepository
     public async Task<Actions?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return await _context.Actions
+            .Include(a => a.ActionType)
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
@@ -94,6 +97,7 @@ public class ActionRepository : IActionRepository
         var normalizedCode = code.Trim().ToUpper();
 
         return await _context.Actions
+            .Include(a => a.ActionType)
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Code.ToUpper() == normalizedCode, cancellationToken);
     }

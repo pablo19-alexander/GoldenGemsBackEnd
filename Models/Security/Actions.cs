@@ -23,9 +23,14 @@ public class Actions : BaseEntity
     public string Code { get; set; } = string.Empty;
 
     /// <summary>
-    /// Tipo de acción: Form (formulario), Process (proceso), View (visualización), etc.
+    /// Identificador del tipo de acción asociado.
     /// </summary>
-    public string ActionType { get; set; } = string.Empty;
+    public Guid ActionTypeId { get; set; }
+
+    /// <summary>
+    /// Referencia al tipo de acción asociado.
+    /// </summary>
+    public ActionType? ActionType { get; set; }
 
     /// <summary>
     /// ID del módulo al que pertenece la acción (opcional).

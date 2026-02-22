@@ -38,6 +38,11 @@ public class GoldenGemsDbContext : DbContext
     public DbSet<Actions> Actions { get; set; } = default!;
 
     /// <summary>
+    /// Catálogo de tipos de acción disponibles.
+    /// </summary>
+    public DbSet<ActionType> ActionTypes { get; set; } = default!;
+
+    /// <summary>
     /// Tabla de relación entre Roles y Acciones.
     /// </summary>
     public DbSet<RoleAction> RoleActions { get; set; } = default!;
@@ -96,6 +101,10 @@ public class GoldenGemsDbContext : DbContext
             .HasIndex(a => a.Code)
             .IsUnique();
 
+        modelBuilder.Entity<ActionType>()
+            .HasIndex(at => at.Code)
+            .IsUnique();
+
         // Configurar relaciones - Forms
         modelBuilder.Entity<Form>()
             .HasOne(f => f.Module)
@@ -115,6 +124,12 @@ public class GoldenGemsDbContext : DbContext
             .WithMany(f => f.Actions)
             .HasForeignKey(a => a.FormId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Actions>()
+            .HasOne(a => a.ActionType)
+            .WithMany(at => at.Actions)
+            .HasForeignKey(a => a.ActionTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Configurar relaciones - UserRole
         modelBuilder.Entity<UserRole>()

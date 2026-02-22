@@ -26,9 +26,19 @@ public class ActionResponseDto
     public string? Description { get; set; }
 
     /// <summary>
-    /// Tipo de acción (ej: Form, Process, View, etc.)
+    /// Identificador del tipo de acción asociado.
     /// </summary>
-    public string ActionType { get; set; } = string.Empty;
+    public Guid ActionTypeId { get; set; }
+
+    /// <summary>
+    /// Código del tipo de acción.
+    /// </summary>
+    public string ActionTypeCode { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Descripción del tipo de acción.
+    /// </summary>
+    public string? ActionTypeDescription { get; set; }
 
     /// <summary>
     /// Indica si la acción está activa

@@ -29,6 +29,7 @@ builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 // Admin Services - Repositories
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IActionRepository, ActionRepository>();
+builder.Services.AddScoped<IActionTypeRepository, ActionTypeRepository>();
 
 // Admin Services - Services
 builder.Services.AddScoped<IRoleService, RoleService>();
