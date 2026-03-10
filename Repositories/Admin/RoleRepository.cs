@@ -8,19 +8,13 @@ namespace GoldenGemsBackEnd.Repositories.Admin;
 /// <summary>
 /// Implementación del repositorio para la entidad Role
 /// </summary>
-public class RoleRepository : IRoleRepository
+public class RoleRepository : GenericRepository<Role>, IRoleRepository
 {
-    private readonly GoldenGemsDbContext _context;
-
-    public RoleRepository(GoldenGemsDbContext context)
+    public RoleRepository(GoldenGemsDbContext context) : base(context)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    /// <summary>
-    /// Crea un nuevo rol en la base de datos
-    /// </summary>
-    public async Task<Role> CreateAsync(Role role, CancellationToken cancellationToken)
+    public override async Task<Role> CreateAsync(Role role, CancellationToken cancellationToken)
     {
         if (role == null)
             throw new ArgumentNullException(nameof(role));
@@ -28,33 +22,17 @@ public class RoleRepository : IRoleRepository
         // Normalizar nombre (trim y lowercase para comparación)
         role.Name = role.Name.Trim();
 
-        _context.Roles.Add(role);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return role;
+        return await base.CreateAsync(role, cancellationToken);
     }
 
-    /// <summary>
-    /// Obtiene todos los roles de la base de datos
-    /// </summary>
-    public async Task<List<Role>> GetAllAsync(CancellationToken cancellationToken)
+    public override async Task<Role> UpdateAsync(Role role, CancellationToken cancellationToken)
     {
-        return await _context.Roles
-            .AsNoTracking()
-            .OrderBy(r => r.Name)
-            .ToListAsync(cancellationToken);
-    }
+        if (role == null)
+            throw new ArgumentNullException(nameof(role));
 
-    /// <summary>
-    /// Obtiene todos los roles activos
-    /// </summary>
-    public async Task<List<Role>> GetAllActiveAsync(CancellationToken cancellationToken)
-    {
-        return await _context.Roles
-            .AsNoTracking()
-            .Where(r => r.IsActive)
-            .OrderBy(r => r.Name)
-            .ToListAsync(cancellationToken);
+        role.Name = role.Name.Trim();
+
+        return await base.UpdateAsync(role, cancellationToken);
     }
 
     /// <summary>
@@ -72,15 +50,7 @@ public class RoleRepository : IRoleRepository
             .AnyAsync(r => r.Name.ToLower() == normalizedName, cancellationToken);
     }
 
-    /// <summary>
-    /// Obtiene un rol por su identificador único
-    /// </summary>
-    public async Task<Role?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
-    {
-        return await _context.Roles
-            .AsNoTracking()
-            .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
-    }
+
 
     /// <summary>
     /// Obtiene un rol por su nombre
@@ -95,13 +65,5 @@ public class RoleRepository : IRoleRepository
         return await _context.Roles
             .AsNoTracking()
             .FirstOrDefaultAsync(r => r.Name.ToLower() == normalizedName, cancellationToken);
-    }
-
-    /// <summary>
-    /// Guarda los cambios en la base de datos
-    /// </summary>
-    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken)
-    {
-        return await _context.SaveChangesAsync(cancellationToken);
     }
 }

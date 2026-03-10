@@ -8,19 +8,13 @@ namespace GoldenGemsBackEnd.Repositories.Admin;
 /// <summary>
 /// Implementación del repositorio para la entidad Actions
 /// </summary>
-public class ActionRepository : IActionRepository
+public class ActionRepository : GenericRepository<Actions>, IActionRepository
 {
-    private readonly GoldenGemsDbContext _context;
-
-    public ActionRepository(GoldenGemsDbContext context)
+    public ActionRepository(GoldenGemsDbContext context) : base(context)
     {
-        _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    /// <summary>
-    /// Crea una nueva acción en la base de datos
-    /// </summary>
-    public async Task<Actions> CreateAsync(Actions action, CancellationToken cancellationToken)
+    public override async Task<Actions> CreateAsync(Actions action, CancellationToken cancellationToken)
     {
         if (action == null)
             throw new ArgumentNullException(nameof(action));
@@ -29,35 +23,45 @@ public class ActionRepository : IActionRepository
         action.Code = action.Code.Trim().ToUpper();
         action.Name = action.Name.Trim();
 
-        _context.Actions.Add(action);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return action;
+        return await base.CreateAsync(action, cancellationToken);
     }
 
-    /// <summary>
-    /// Obtiene todas las acciones de la base de datos
-    /// </summary>
-    public async Task<List<Actions>> GetAllAsync(CancellationToken cancellationToken)
+    public override async Task<Actions> UpdateAsync(Actions action, CancellationToken cancellationToken)
     {
-        return await _context.Actions
+        if (action == null)
+            throw new ArgumentNullException(nameof(action));
+
+        action.Code = action.Code.Trim().ToUpper();
+        action.Name = action.Name.Trim();
+
+        return await base.UpdateAsync(action, cancellationToken);
+    }
+
+    public override async Task<List<Actions>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await _dbSet
             .Include(a => a.ActionType)
             .AsNoTracking()
             .OrderBy(a => a.Code)
             .ToListAsync(cancellationToken);
     }
 
-    /// <summary>
-    /// Obtiene todas las acciones activas
-    /// </summary>
-    public async Task<List<Actions>> GetAllActiveAsync(CancellationToken cancellationToken)
+    public override async Task<List<Actions>> GetAllActiveAsync(CancellationToken cancellationToken)
     {
-        return await _context.Actions
+        return await _dbSet
             .Include(a => a.ActionType)
             .AsNoTracking()
             .Where(a => a.IsActive)
             .OrderBy(a => a.Code)
             .ToListAsync(cancellationToken);
+    }
+
+    public override async Task<Actions?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return await _dbSet
+            .Include(a => a.ActionType)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
 
     /// <summary>
@@ -75,16 +79,7 @@ public class ActionRepository : IActionRepository
             .AnyAsync(a => a.Code.ToUpper() == normalizedCode, cancellationToken);
     }
 
-    /// <summary>
-    /// Obtiene una acción por su identificador único
-    /// </summary>
-    public async Task<Actions?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
-    {
-        return await _context.Actions
-            .Include(a => a.ActionType)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
-    }
+
 
     /// <summary>
     /// Obtiene una acción por su código
@@ -100,13 +95,5 @@ public class ActionRepository : IActionRepository
             .Include(a => a.ActionType)
             .AsNoTracking()
             .FirstOrDefaultAsync(a => a.Code.ToUpper() == normalizedCode, cancellationToken);
-    }
-
-    /// <summary>
-    /// Guarda los cambios en la base de datos
-    /// </summary>
-    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken)
-    {
-        return await _context.SaveChangesAsync(cancellationToken);
     }
 }

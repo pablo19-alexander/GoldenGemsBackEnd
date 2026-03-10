@@ -6,15 +6,9 @@ namespace GoldenGemsBackEnd.Repositories.Auth.Interfaces;
 /// Interfaz del repositorio para la entidad User
 /// Define operaciones específicas para gestionar usuarios
 /// </summary>
-public interface IUserRepository
+public interface IUserRepository : IRepository<User>
 {
-    /// <summary>
-    /// Crea un nuevo usuario en la base de datos
-    /// </summary>
-    /// <param name="user">Objeto User a crear</param>
-    /// <param name="cancellationToken">Token de cancelación</param>
-    /// <returns>El usuario creado con su ID asignado</returns>
-    Task<User> CreateAsync(User user, CancellationToken cancellationToken);
+
 
     /// <summary>
     /// Obtiene un usuario por su email
@@ -56,10 +50,4 @@ public interface IUserRepository
     /// <returns>true si el username existe, false en caso contrario</returns>
     Task<bool> UsernameExistsAsync(string username, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Guarda los cambios en la base de datos
-    /// </summary>
-    /// <param name="cancellationToken">Token de cancelación</param>
-    /// <returns>Número de registros afectados</returns>
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
