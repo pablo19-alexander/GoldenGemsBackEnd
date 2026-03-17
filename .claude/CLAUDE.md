@@ -1,163 +1,197 @@
 # Golden Gems Backend
 
-A C# ASP.NET Core 10.0 backend service for the Golden Gems application.
+Backend en C# ASP.NET Core 10.0 para la aplicación Golden Gems.
 
-## Project Overview
+## Información General
 
 - **Framework**: ASP.NET Core 10.0
-- **Database**: PostgreSQL (via Npgsql.EntityFrameworkCore)
-- **Authentication**: JWT Bearer (JSON Web Tokens)
-- **API Documentation**: Swagger/OpenAPI (via Swashbuckle.AspNetCore)
+- **Base de datos**: PostgreSQL (Npgsql.EntityFrameworkCore)
+- **Autenticación**: JWT Bearer (HS256)
+- **Documentación API**: Swagger/OpenAPI (Swashbuckle.AspNetCore)
 - **ORM**: Entity Framework Core 10.0.2
+- **Puerto local**: `http://localhost:5135` (dev), `https://localhost:7286` (HTTPS)
 
-## Key Features
-
-- User authentication and authorization with JWT
-- User registration and login system
-- Entity management with database migrations
-- RESTful API endpoints
-- Swagger UI for API documentation
-
-## Project Structure
+## Estructura del Proyecto
 
 ```
 GoldenGemsBackEnd/
-├── Controllers/          # API endpoint controllers
-├── Models/              # Domain models and entities
-├── DTOs/                # Data Transfer Objects
-├── Services/            # Business logic services
-├── Repositories/        # Data access layer
-├── Data/                # DbContext and database configuration
-├── Middleware/          # Custom middleware components
-├── Migrations/          # Entity Framework migrations
-├── Configurations/      # Application configuration files
-├── Properties/          # Project properties
-├── Program.cs           # Application startup configuration
-├── appsettings.json     # Configuration settings
-├── appsettings.Development.json  # Development-specific settings
-└── GoldenGemsBackEnd.csproj      # Project file
+├── Configurations/
+│   └── JwtSettings.cs              # Modelo de configuración JWT
+├── Controllers/
+│   ├── AuthController.cs           # Login y registro
+│   ├── RoleController.cs           # CRUD de roles (Admin)
+│   ├── ActionController.cs         # CRUD de acciones (Admin)
+│   └── HealthController.cs         # Health check
+├── Data/
+│   ├── Configurations/
+│   │   └── UserConfiguration.cs    # Configuración EF del User
+│   └── GoldenGemsDbContext.cs      # DbContext principal
+├── DTOs/
+│   ├── ApiResponse.cs              # Wrapper genérico de respuesta
+│   ├── Admin/
+│   │   ├── CreateRoleRequestDto.cs
+│   │   ├── RoleResponseDto.cs
+│   │   ├── CreateActionRequestDto.cs
+│   │   └── ActionResponseDto.cs
+│   └── Auth/
+│       ├── LoginRequestDto.cs
+│       ├── RegisterRequestDto.cs
+│       ├── CreateUserRequestDto.cs # DTO para creación admin (pendiente)
+│       └── AuthResponseDto.cs
+├── Middleware/
+│   └── ExceptionHandlingMiddleware.cs  # Manejo global de excepciones
+├── Migrations/
+│   ├── 20260211022910_InitialCreate.cs
+│   └── 20260222202416_AddActionTypeEntity.cs
+├── Models/
+│   ├── BaseEntity.cs               # Entidad base (Id, CreatedAt, UpdatedAt, IsActive)
+│   ├── Security/
+│   │   ├── User.cs                 # Usuario (Email, Username, PasswordHash)
+│   │   ├── Role.cs                 # Rol
+│   │   ├── Actions.cs              # Acción/permiso
+│   │   ├── ActionType.cs           # Tipo de acción
+│   │   ├── UserRole.cs             # Tabla puente User-Role
+│   │   ├── RoleAction.cs           # Tabla puente Role-Action
+│   │   ├── Module.cs               # Módulo del sistema
+│   │   └── Form.cs                 # Formulario dentro de módulo
+│   └── People/
+│       ├── Person.cs               # Persona (datos personales, 1:1 con User)
+│       ├── DocumentType.cs         # Tipo de documento
+│       ├── Contact.cs              # Información de contacto
+│       └── Region.cs               # Departamento/Municipio
+├── Repositories/
+│   ├── IRepository.cs              # Interfaz genérica
+│   ├── GenericRepository.cs        # Implementación genérica (CRUD + soft delete)
+│   ├── Admin/
+│   │   ├── Interfaces/
+│   │   │   ├── IRoleRepository.cs
+│   │   │   ├── IActionRepository.cs
+│   │   │   └── IActionTypeRepository.cs
+│   │   ├── RoleRepository.cs
+│   │   ├── ActionRepository.cs
+│   │   └── ActionTypeRepository.cs
+│   └── Auth/
+│       ├── Interfaces/
+│       │   └── IUserRepository.cs
+│       └── UserRepository.cs
+├── Services/
+│   ├── BaseService.cs              # Servicio base con ILogger
+│   ├── Admin/
+│   │   ├── Interfaces/
+│   │   │   ├── IRoleService.cs
+│   │   │   └── IActionService.cs
+│   │   └── Services/
+│   │       ├── RoleService.cs
+│   │       └── ActionService.cs
+│   └── Auth/
+│       ├── Interfaces/
+│       │   ├── IAuthService.cs
+│       │   ├── ITokenService.cs
+│       │   └── IUserValidationService.cs  # Interfaz definida, sin implementación
+│       ├── Models/
+│       │   └── TokenResult.cs
+│       ├── Services/
+│       │   ├── AuthService.cs
+│       │   └── JwtTokenService.cs
+│       └── Validators/
+│           └── PasswordValidator.cs       # Validador estático de contraseñas
+├── Info/
+│   └── Regiones.xls                # Datos de regiones (referencia)
+├── Program.cs                      # Startup y configuración de DI
+├── appsettings.json                # Configuración producción
+├── appsettings.Development.json    # Configuración desarrollo
+├── GoldenGemsBackEnd.http          # Tests HTTP
+├── api-tests.http                  # Tests HTTP adicionales
+└── GoldenGemsBackEnd.csproj        # Archivo de proyecto
 ```
 
-## Getting Started
+## Endpoints API
 
-### Prerequisites
+### Auth (`/api/auth`) — Públicos
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/auth/register` | Registro público (crea User + Person, asigna rol "User") |
+| POST | `/api/auth/login` | Login por email o username, retorna JWT |
 
-- .NET 10.0 SDK
-- PostgreSQL database
+### Roles (`/api/role`) — Requiere `[Authorize(Roles = "Admin")]`
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/role/create` | Crear rol |
+| GET | `/api/role/all` | Listar todos los roles |
 
-### Setup
+### Actions (`/api/action`) — Requiere `[Authorize(Roles = "Admin")]`
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| POST | `/api/action/create` | Crear acción (requiere ActionTypeId válido) |
+| GET | `/api/action/all` | Listar todas las acciones |
 
-1. **Install dependencies**:
-   ```bash
-   dotnet restore
-   ```
+### Health (`/api/health`) — Público
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/health` | Health check con timestamp |
 
-2. **Configure database connection** in `appsettings.json`:
-   ```json
-   {
-     "ConnectionStrings": {
-       "DefaultConnection": "Host=localhost;Database=goldengemdb;User Id=postgres;Password=your_password;"
-     }
-   }
-   ```
+## Arquitectura y Patrones
 
-3. **Run database migrations**:
-   ```bash
-   dotnet ef database update
-   ```
+- **Arquitectura en capas**: Controllers → Services → Repositories → DbContext
+- **Repository Pattern**: `GenericRepository<T>` base con operaciones CRUD
+- **Soft Delete**: Todas las entidades heredan de `BaseEntity` con campo `IsActive`
+- **BaseEntity**: Provee `Id` (Guid), `CreatedAt`, `UpdatedAt`, `IsActive`
+- **ApiResponse<T>**: Wrapper estándar para todas las respuestas de API
+- **ExceptionHandlingMiddleware**: Captura excepciones no manejadas, retorna JSON estandarizado
+- **Inicialización automática**: El rol "User" se crea al iniciar la app si no existe
 
-4. **Run the application**:
-   ```bash
-   dotnet run
-   ```
+## Validación de Contraseñas (PasswordValidator)
 
-The API will be available at `http://localhost:5000` and Swagger UI at `http://localhost:5000/swagger`.
+- Mínimo 8 caracteres
+- Al menos 1 mayúscula, 1 minúscula, 1 número, 1 carácter especial (!@#$%^&*)
 
-## Recent Work
+## Configuración
 
-- JWT authentication integration
-- User login and registration
-- Security model and people entity management
-- Connection string configuration
-- Entity ordering and organization
+- **CORS**: Orígenes permitidos: `http://localhost:3000`, `http://localhost:5173`
+- **JWT**: Configurado en `appsettings.json` → sección `JwtSettings`
+- **PostgreSQL**: Connection string en `ConnectionStrings:DefaultConnection`
+- **Nullable reference types**: habilitados
+- **Implicit usings**: habilitados
 
-## Dependencies
+## Dependencias
 
-- **Microsoft.AspNetCore.Authentication.JwtBearer** (10.0.2) - JWT authentication
-- **Microsoft.AspNetCore.OpenApi** (10.0.2) - OpenAPI support
-- **Microsoft.EntityFrameworkCore** (10.0.2) - ORM
-- **Microsoft.EntityFrameworkCore.Design** (10.0.2) - EF design-time tools
-- **Npgsql.EntityFrameworkCore.PostgreSQL** (10.0.0) - PostgreSQL provider
-- **Swashbuckle.AspNetCore** (10.1.0) - Swagger/OpenAPI UI
+| Paquete | Versión |
+|---------|---------|
+| Microsoft.AspNetCore.Authentication.JwtBearer | 10.0.2 |
+| Microsoft.AspNetCore.OpenApi | 10.0.2 |
+| Microsoft.EntityFrameworkCore | 10.0.2 |
+| Microsoft.EntityFrameworkCore.Design | 10.0.2 |
+| Npgsql.EntityFrameworkCore.PostgreSQL | 10.0.0 |
+| Swashbuckle.AspNetCore | 10.1.0 |
 
-## API Testing
+## Estado Actual del Desarrollo
 
-Test HTTP requests are available in:
-- `GoldenGemsBackEnd.http` - Main API tests
-- `api-tests.http` - Additional API tests
+### Completado
+- Autenticación JWT (login y registro)
+- Gestión de roles (crear, listar) — solo Admin
+- Gestión de acciones/permisos (crear, listar) — solo Admin
+- Modelo de datos completo (Security + People)
+- Middleware de manejo de excepciones
+- Health check endpoint
+- Inicialización automática del rol "User"
 
-## Development Notes
+### Pendiente
+- **UserValidationService**: Interfaz `IUserValidationService` definida pero sin implementación
+- **Endpoint `/api/auth/create`**: Creación de usuarios por Admin (DTO `CreateUserRequestDto` ya existe)
+- **Validaciones faltantes en registro**: Unicidad de documento, existencia de DocumentType
+- **CRUD completo de entidades**: Module, Form, DocumentType, Contact, Region
 
-- Nullable reference types are enabled (`<Nullable>enable</Nullable>`)
-- Implicit usings are enabled for cleaner code
-- Repository pattern is used for data access
-- Services layer handles business logic
-- JWT tokens are used for stateless authentication
+## Comandos
 
-## User Creation System (NEW - In Progress)
+```bash
+dotnet restore          # Instalar dependencias
+dotnet build            # Compilar
+dotnet run              # Ejecutar (dev)
+dotnet ef database update  # Aplicar migraciones
+dotnet ef migrations add <Nombre>  # Crear migración
+```
 
-### Overview
-Complete user creation flow with roles and actions management.
+## Git
 
-### Components Implemented (FASE 0 - Complete)
-
-1. **Role Management**:
-   - `POST /api/role/create` - Create new role (Admin only)
-   - `GET /api/role/all` - Get all roles (Admin only)
-   - Automatic "User" role creation on startup
-
-2. **Action Management**:
-   - `POST /api/action/create` - Create new action (Admin only)
-   - `GET /api/action/all` - Get all actions (Admin only)
-
-### Components In Progress (FASE 1)
-
-1. **User Creation Endpoints**:
-   - `POST /api/auth/register` - Public registration (updated)
-     - Requires complete Person information
-     - Automatic "User" role assignment
-     - IsActive = true by default
-   - `POST /api/auth/create` - Admin user creation (in progress)
-     - Requires authorization (Admin role)
-     - Custom role assignment
-     - Optional IsActive flag
-
-2. **Password Validation**:
-   - Minimum 8 characters
-   - At least 1 uppercase, 1 lowercase, 1 number, 1 special character (!@#$%^&*)
-
-3. **Validations**:
-   - Email uniqueness
-   - Username uniqueness
-   - Document number uniqueness (by DocumentType)
-   - Role existence
-   - DocumentType existence
-
-### Files Created
-- See `NEXT_STEPS.md` for detailed file list and implementation checklist
-
-### Next Steps
-- Implement UserValidationService
-- Update AuthService with user creation methods
-- Update AuthController with `/api/auth/create` endpoint
-- Create database migrations
-- Add HTTP test examples
-- Run complete manual tests
-
-For detailed implementation plan, see `NEXT_STEPS.md`
-
-## Git Workflow
-
-- Main branch: `master`
-- Current branch: `claude/serene-bouman` (git worktree)
-- All changes should be committed with clear, descriptive messages
+- Rama principal: `master`
+- Commits en español con mensajes descriptivos
